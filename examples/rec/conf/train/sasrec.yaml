@@ -1,0 +1,32 @@
+# kang205/SASRec main.py defaults + README ml-1m command
+# (maxlen 200, dropout 0.2, hidden 50, 2 blocks, 1 head, lr 1e-3, beta2 0.98,
+# batch 128, 201 epochs, evaluation every 20 epochs). See examples/rec/EVIDENCE.md.
+name: sasrec
+task: sequential
+seed: 42
+batch_size: 128
+eval_batch_size: 1024
+epochs: 200
+eval_every: 20
+select_metric: ndcg@10
+log_every: 0
+output_dir: ${experiment.exp_dir}/checkpoint
+
+model:
+  model_type: sasrec
+  torch_dtype: fp32
+  hidden_size: 50
+  num_blocks: 2
+  num_heads: 1
+  dropout: 0.2
+
+data:
+  path: /flagos-rec/datasets/movielens_1m_sasrec
+  num_workers: 2
+  max_samples: null
+  eval_max_samples: null
+
+optimizer:
+  lr: 1.0e-3
+  betas: [0.9, 0.98]
+  weight_decay: 0.0

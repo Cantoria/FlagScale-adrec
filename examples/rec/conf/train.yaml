@@ -1,0 +1,62 @@
+# Copyright 2026 FlagOS Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+
+defaults:
+  - _self_
+  - train: sasrec
+
+experiment:
+  exp_name: rec-${train.name}
+  exp_dir: /flagos-rec/ckpts/${train.name}-${train.hardware.device_type}
+  seed: ${train.seed}
+  task:
+    type: train
+    backend: native
+    entrypoint: flagscale/train/train_rec.py
+  runner:
+    type: ssh
+    hostfile: null
+    nnodes: 1
+    nproc_per_node: 1
+    no_shared_fs: false
+    rdzv_backend: static
+  envs:
+    # `cuda` runs native CUDA PyTorch; `flagos` routes every operator through
+    # Torch-FL. Model and training code are identical in both cases.
+    FLAGSCALE_DEVICE: ${oc.env:FLAGSCALE_DEVICE,${train.hardware.device_type}}
+    FS_PLATFORM: ${oc.env:FS_PLATFORM,${train.hardware.device_type}}
+    FLAGSCALE_DISTRIBUTED_BACKEND: ${oc.env:FLAGSCALE_DISTRIBUTED_BACKEND,${train.hardware.distributed_backend}}
+    FLAGOS_USE_FLAGGEMS: ${oc.env:FLAGOS_USE_FLAGGEMS,${train.hardware.use_flaggems}}
+    # The Torch-FL venv has another FlagScale checkout installed in editable
+    # mode; put this checkout first so the rec modules are importable.
+    PYTHONPATH: ${oc.env:FLAGSCALE_HOME,/flagos-rec/codes/FlagScale}
+    OMP_NUM_THREADS: "4"
+    # Runs are written locally and uploaded later with `wandb sync`.
+    WANDB_MODE: ${oc.env:WANDB_MODE,offline}
+  cmds:
+    before_start: >-
+      source ${oc.env:FLAGSCALE_PYTHON_ENV,/flagos-search-codes/torch-fl-cuda/.venv}/bin/activate
+
+action: run
+
+train:
+  wandb_project: flagos-rec
+  hardware:
+    device_type: ${oc.env:FLAGSCALE_DEVICE,cuda}
+    distributed_backend: auto
+    # Quoted on purpose: an unquoted YAML false reaches the environment as
+    # "False", which Torch-FL does not treat as off and then routes every op
+    # to the FlagGems backend table.
+    use_flaggems: "false"
+  system:
+    checkpoint:
+      save: ${train.output_dir}
+      load: null
+    logging:
+      log_dir: ${experiment.exp_dir}/logs
+
+hydra:
+  run:
+    dir: ${experiment.exp_dir}/hydra
