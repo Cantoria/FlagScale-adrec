@@ -1,0 +1,38 @@
+# BARS DCNv2_criteo_x1 settings (FuxiCTR v1.1.0, model_id DCNv2_criteo_x1_001_28c60688) with
+# use_low_rank_mixture switched on (low_rank 32, num_experts 4, as in that config).
+# BARS publishes the full-rank DCN-V2 only: test AUC 0.814195 / logloss 0.437788.
+# DCN-V2 paper Table 6 (own Criteo split): DCN-Mix AUC 0.8112 vs DCN-V2 0.8115. See examples/ads/EVIDENCE.md.
+name: dcn_mix
+seed: 2021
+batch_size: 4096
+eval_batch_size: 65536
+epochs: 100
+early_stop_patience: 2
+monitor: AUC
+log_every: 0
+output_dir: ${experiment.exp_dir}/checkpoint
+
+model:
+  model_type: dcn_mix
+  torch_dtype: fp32
+  embedding_dim: 10
+  num_cross_layers: 3
+  low_rank: 32
+  num_experts: 4
+  parallel_dnn_hidden_units: [500, 500, 500]
+  dnn_activations: relu
+  net_dropout: 0.1
+  batch_norm: false
+
+data:
+  path: /flagos-ads/datasets/criteo_x1
+  valid_split: valid
+  group_key: null
+  num_workers: 2
+  max_samples: null
+  eval_max_samples: null
+
+optimizer:
+  lr: 1.0e-3
+  embedding_regularizer: 1.0e-5
+  max_gradient_norm: 10.0

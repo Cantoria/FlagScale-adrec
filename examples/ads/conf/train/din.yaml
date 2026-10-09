@@ -1,0 +1,39 @@
+# BARS DIN_amazonelectronics_x1 (FuxiCTR v2.0.1, expid DIN_amazonelectronics_x1_015_8539c013):
+# reported test gAUC 0.883526 / AUC 0.886028 / logloss 0.430190. See examples/ads/EVIDENCE.md.
+name: din
+seed: 20222023
+batch_size: 1024
+eval_batch_size: 8192
+epochs: 100
+early_stop_patience: 2
+monitor: gAUC
+log_every: 0
+output_dir: ${experiment.exp_dir}/checkpoint
+
+model:
+  model_type: din
+  torch_dtype: fp32
+  embedding_dim: 64
+  attention_hidden_units: [512, 256]
+  attention_hidden_activations: dice
+  attention_dropout: 0.1
+  din_use_softmax: true
+  dnn_hidden_units: [1024, 512, 256]
+  dnn_activations: dice
+  net_dropout: 0.1
+  batch_norm: true
+
+data:
+  path: /flagos-ads/datasets/amazonelectronics_x1
+  # BARS sets valid_data to test.csv: model selection and early stopping run
+  # on the test split. Kept for comparability with the published number.
+  valid_split: test
+  group_key: user_id
+  num_workers: 2
+  max_samples: null
+  eval_max_samples: null
+
+optimizer:
+  lr: 5.0e-4
+  embedding_regularizer: 5.0e-3
+  max_gradient_norm: 10.0
